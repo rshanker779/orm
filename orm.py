@@ -76,9 +76,7 @@ class Base(StringMixin, metaclass=BaseMeta):
 
     def __init__(self, **kwargs):
         super().__init__()
-        columns = [
-            (i, v) for i, v in self.__class__.__dict__.items() if isinstance(v, Column)
-        ]
+        columns = self.get_columns(self.__class__.__dict__)
         if columns:
             for col_name, column in columns:
                 col_data = kwargs[col_name]
