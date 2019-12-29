@@ -1,7 +1,7 @@
 from typing import Iterable, Dict, Any
 
 from example_orm.orm_db import ORMDB
-from utilities import StringMixin
+from example_orm.utilities import StringMixin
 
 
 class IncorrectColumnError(Exception):

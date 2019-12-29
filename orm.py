@@ -3,7 +3,7 @@ from typing import Tuple, List, Iterable
 
 from example_orm.orm_db import ORMDB
 from example_orm.simple_db import db
-from utilities import StringMixin
+from example_orm.utilities import StringMixin
 
 
 class ColumnTypes(Enum):
