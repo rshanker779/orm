@@ -1,7 +1,7 @@
 from orm import Base, Column, ColumnTypes
 from simple_db import db
 
-MyBase = Base.build("test_str")
+MyBase = Base.build("postgresql")
 
 
 class Post(MyBase):
