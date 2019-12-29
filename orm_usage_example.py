@@ -1,5 +1,5 @@
-from example_orm.orm import Base, Column, ColumnTypes
-from example_orm.simple_db import db
+from orm import Base, Column, ColumnTypes
+from simple_db import db
 
 MyBase = Base.build("test_str")
 

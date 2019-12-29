@@ -1,9 +1,9 @@
 from enum import Enum
 from typing import Tuple, List, Iterable
 
-from example_orm.orm_db import ORMDB
-from example_orm.simple_db import db
-from example_orm.utilities import StringMixin
+from orm_db import ORMDB
+from simple_db import db
+from utilities import StringMixin
 
 
 class ColumnTypes(Enum):
@@ -14,7 +14,7 @@ class ColumnTypes(Enum):
         if self == ColumnTypes.int:
             return "int"
         elif self == ColumnTypes.string:
-            return "Varchar(max)"
+            return "Varchar"
 
     def to_python_type(self) -> type:
         if self == ColumnTypes.int:

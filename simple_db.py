@@ -1,7 +1,7 @@
 from typing import Iterable, Dict, Any
 
-from example_orm.orm_db import ORMDB
-from example_orm.utilities import StringMixin
+from orm_db import ORMDB
+from utilities import StringMixin
 
 
 class IncorrectColumnError(Exception):
@@ -62,7 +62,7 @@ class DB(StringMixin, ORMDB):
 
 class _SQLParser:
     _table_creation_special = {"primary key", "foreign key"}
-    _column_type_map = {"int": int, "varchar(max)": str}
+    _column_type_map = {"int": int, "varchar": str}
 
     @classmethod
     def _parse_sql(cls, sql_str: str):
@@ -123,7 +123,7 @@ class _SQLParser:
         has_filters = "where" in sql_statement
         filters = []
         if has_filters:
-            # Note, no or support
+            # Note, no 'or' support
             filters = sql_statement.split("where", 1)[-1].split("and")
 
         filters = [i.split("=") for i in filters]
