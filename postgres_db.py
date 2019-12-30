@@ -10,7 +10,8 @@ class PostgresORMDB(ORMDB):
         We drop everything since this is a dummy project
         """
         res = self.engine.execute(
-            "select 'drop table if exists \"' || tablename || '\" cascade;' from pg_tables where schemaname = 'public';"
+            "select 'drop table if exists \"' || tablename || '\" cascade;' "
+            "from pg_tables where schemaname = 'public';"
         )
         for table_drop, *_ in res:
             self.engine.execute(table_drop)

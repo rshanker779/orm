@@ -1,4 +1,5 @@
-from typing import Iterable, Dict, Any
+from enum import Enum
+from typing import Iterable, Dict, Any, List
 
 from orm_db import ORMDB
 from utilities import StringMixin
@@ -37,35 +38,41 @@ class Table(StringMixin):
         if set(row.col_names) != self.col_names:
             raise IncorrectColumnError(
                 "Row names {} do not match columns {}".format(
-                    row.data.keys(), self.col_names
+                    row.col_names, self.col_names
                 )
             )
         self.rows.append(row)
 
 
-class DB(StringMixin, ORMDB):
-    def __init__(self):
-        super().__init__()
-        self.sql_parser = _SQLParser()
-        self.tables = {}  # type: Dict[str, Table]
+class SQLType(Enum):
+    CREATE = 0
+    INSERT = 1
+    SELECT = 2
 
-    def _add_table(self, table: Table):
-        self.tables[table.name] = table
 
-    def get_table(self, table_name: str) -> Table:
-        return self.tables[table_name]
-
-    def parse_sql(self, sql_str):
-        print("Executing query '{}'".format(sql_str))
-        return self.sql_parser._parse_sql(sql_str)
+class SQLReturn:
+    def __init__(
+        self,
+        type: SQLType,
+        table: Table = None,
+        table_name: str = None,
+        row: Row = None,
+        filters=None,
+        col_names: Iterable[str] = None,
+    ):
+        self.type = type
+        self.table = table
+        self.table_name = table_name
+        self.row = row
+        self.filters = filters
+        self.col_names = col_names
 
 
 class _SQLParser:
     _table_creation_special = {"primary key", "foreign key"}
     _column_type_map = {"int": int, "varchar": str}
 
-    @classmethod
-    def _parse_sql(cls, sql_str: str):
+    def _parse_sql(cls, sql_str: str) -> SQLReturn:
         sql_str = sql_str.strip().lower()
         cls.raw_sql_str = sql_str
         sql_parts = sql_str.split(";")
@@ -75,14 +82,13 @@ class _SQLParser:
                 print("Transactional code not supported")
                 continue
             elif sql_statement.startswith("create"):
-                cls._parse_table_creation(sql_statement)
+                return cls._parse_table_creation(sql_statement)
             elif sql_statement.startswith("insert"):
-                cls._parse_insert_statement(sql_statement)
+                return cls._parse_insert_statement(sql_statement)
             elif sql_statement.startswith("select"):
                 return cls._parse_select_statement(sql_statement)
 
-    @classmethod
-    def _parse_table_creation(cls, sql_statement: str):
+    def _parse_table_creation(self, sql_statement: str):
         sql_statement = sql_statement.replace("create table", "")
         table_name = sql_statement.split("(")[0]
         # Dirty way to take section enclosed in parentheses
@@ -91,19 +97,17 @@ class _SQLParser:
         for column_data in table_data.split(","):
             column_data = column_data.strip()
             is_special = any(
-                column_data.startswith(i) for i in cls._table_creation_special
+                column_data.startswith(i) for i in self._table_creation_special
             )
-
             if not is_special:
                 column_name, column_type = column_data.split(" ")
-                column = Column(column_name, cls._column_type_map[column_type.strip()])
+                column = Column(column_name, self._column_type_map[column_type.strip()])
                 columns.append(column)
             if is_special:
                 print("Table keys and relations not currently supported")
-            table = Table(table_name, columns)
-            db._add_table(table)
+        table = Table(table_name, columns)
+        return SQLReturn(SQLType.CREATE, table)
 
-    @classmethod
     def _parse_insert_statement(cls, sql_statement):
         sql_statement = sql_statement.replace("insert into", "").strip()
         table_name = sql_statement.split(" ", 1)[0]
@@ -111,11 +115,9 @@ class _SQLParser:
         column_values = sql_statement.rsplit("(", 1)[-1].rsplit(")", 1)[0].split(",")
         column_values = [i.replace("'", "").replace('"', "") for i in column_values]
         row_dict = {i: v for i, v in zip(column_names.split(","), column_values)}
-        table = db.get_table(table_name)
         row = Row(row_dict)
-        table.add_row(row)
+        return SQLReturn(SQLType.INSERT, table_name=table_name, row=row)
 
-    @classmethod
     def _parse_select_statement(cls, sql_statement):
         sql_statement = sql_statement.replace("select", "")
         col_names = sql_statement.split("from", 1)[0].split(",")
@@ -125,10 +127,40 @@ class _SQLParser:
         if has_filters:
             # Note, no 'or' support
             filters = sql_statement.split("where", 1)[-1].split("and")
-
         filters = [i.split("=") for i in filters]
-        full_results = db.get_table(table_name).rows
-        for filter_col, filter_val in filters:
+        return SQLReturn(
+            SQLType.SELECT, table_name=table_name, filters=filters, col_names=col_names
+        )
+
+
+class DB(
+    StringMixin, ORMDB,
+):
+    def __init__(self):
+        super().__init__()
+        self.tables = {}  # type: Dict[str, Table]
+        self.sql_parser = _SQLParser()
+
+    def _add_table(self, table: Table):
+        print("Adding table {}".format(table))
+        self.tables[table.name] = table
+
+    def get_table(self, table_name: str) -> Table:
+        return self.tables[table_name]
+
+    def parse_sql(self, sql_str):
+        print("Executing query '{}'".format(sql_str))
+        sql_return = self.sql_parser._parse_sql(sql_str)
+        if sql_return.type == SQLType.CREATE:
+            self._add_table(sql_return.table)
+        elif sql_return.type == SQLType.INSERT:
+            self.get_table(sql_return.table_name).add_row(sql_return.row)
+        elif sql_return.type == SQLType.SELECT:
+            return list(self._process_select_results(sql_return))
+
+    def _process_select_results(self, sql_return):
+        full_results = self.get_table(sql_return.table_name).rows
+        for filter_col, filter_val in sql_return.filters:
             filter_val = filter_val.replace("'", "").replace('"', "")
             full_results = [
                 row
@@ -136,7 +168,4 @@ class _SQLParser:
                 if getattr(row, filter_col.strip()) == filter_val
             ]
         for row in full_results:
-            yield tuple([getattr(row, i.strip()) for i in col_names])
-
-
-db = DB()
+            yield tuple([getattr(row, i.strip()) for i in sql_return.col_names])

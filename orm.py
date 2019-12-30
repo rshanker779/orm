@@ -7,25 +7,26 @@ from utilities import StringMixin
 
 
 class ColumnTypes(Enum):
-    int = 0
-    string = 1
+    Int = 0
+    String = 1
 
     def to_sql_type(self) -> str:
-        if self == ColumnTypes.int:
-            return "int"
-        elif self == ColumnTypes.string:
+        if self == ColumnTypes.Int:
+            return "Int"
+        elif self == ColumnTypes.String:
             return "Varchar"
 
     def to_python_type(self) -> type:
-        if self == ColumnTypes.int:
+        if self == ColumnTypes.Int:
             return int
-        elif self == ColumnTypes.string:
+        elif self == ColumnTypes.String:
             return str
 
 
 class Column:
-    def __init__(self, column_type: ColumnTypes, foreign_key: str = None,
-            primary_key=False):
+    def __init__(
+        self, column_type: ColumnTypes, foreign_key: str = None, primary_key=False
+    ):
         self.column_type = column_type
         self.foreign_key = foreign_key
         self.primary_key = primary_key
@@ -59,7 +60,8 @@ class BaseMeta(type):
 
     def __new__(meta, name, bases, class_dict):
         is_potential_table = bases != tuple() and not all(
-            i in meta.allowed_supers for i in bases)
+            i in meta.allowed_supers for i in bases
+        )
         if is_potential_table and Base in bases:
             if any(isinstance(v, Column) for _, v in class_dict.items()):
                 meta.known_tables[name] = class_dict
@@ -82,17 +84,18 @@ class Base(StringMixin, metaclass=BaseMeta):
                     res = col_type(col_data)
                 except TypeError as e:
                     raise InvalidTypeData(
-                        "Data {} cannot be interpreted as {}".format(col_data,
-                                                                     col_type)) from e
+                        "Data {} cannot be interpreted as {}".format(col_data, col_type)
+                    ) from e
                 setattr(self, col_name, res)
 
     @classmethod
     def build(cls, engine_str: str):
         cls.engine_str = engine_str
-        if 'postgresql' in engine_str:
+        if "postgresql" in engine_str:
             print("Using postgres db")
             cls.db = PostgresORMDB()
         else:
+            print("Using simple db")
             cls.db = DB()
         return cls
 
@@ -111,8 +114,9 @@ class Base(StringMixin, metaclass=BaseMeta):
         cls.execute(creation_sql)
 
     @classmethod
-    def generate_single_sql_creation_statement(cls, table_name, columns,
-            dependencies=None) -> str:
+    def generate_single_sql_creation_statement(
+        cls, table_name, columns, dependencies=None
+    ) -> str:
         base_sql = "create table {} ( ".format(cls.get_table_name(table_name))
         primary_keys = []
         for column_name, v in columns:
@@ -128,7 +132,8 @@ class Base(StringMixin, metaclass=BaseMeta):
                 foreign_key_sql += ",FOREIGN KEY ({}) REFERENCES {} ({})".format(
                     column_dependency.col_name,
                     cls.get_table_name(column_dependency.dependency_table_name),
-                    column_dependency.dependency_table_column, )
+                    column_dependency.dependency_table_column,
+                )
         base_sql += foreign_key_sql + ");"
         return base_sql
 
@@ -145,11 +150,13 @@ class Base(StringMixin, metaclass=BaseMeta):
     def build_sql_creation_statements(cls):
         for table, dependency_chain in cls.dependencies.items():
 
-            sql_statement = cls.generate_single_sql_creation_statement(table,
-                dependency_chain.columns, dependency_chain.dependencies)
+            sql_statement = cls.generate_single_sql_creation_statement(
+                table, dependency_chain.columns, dependency_chain.dependencies
+            )
             if not dependency_chain.dependencies or all(
-                    i.dependency_table_name in cls.processed_tables for i in
-                    dependency_chain.dependencies):
+                i.dependency_table_name in cls.processed_tables
+                for i in dependency_chain.dependencies
+            ):
                 cls.sql_creation_code.append(sql_statement)
                 cls.processed_tables.add(table)
         if len(cls.sql_creation_code) != len(cls.dependencies.items()):
@@ -161,30 +168,37 @@ class Base(StringMixin, metaclass=BaseMeta):
             if table_name.lower() in cls.dependencies:
                 continue
             columns = cls.get_columns(attributes)
-            full_dependencies = [(i, v) for i, v in columns if
-                v.foreign_key is not None]
+            full_dependencies = [
+                (i, v) for i, v in columns if v.foreign_key is not None
+            ]
             if not full_dependencies:
                 cls.dependencies[table_name.lower()] = DependencyChain(
-                    table_name.lower(), columns)
+                    table_name.lower(), columns
+                )
                 continue
             try:
                 simple_dependencies = []
                 for col_name, dependency in full_dependencies:
                     str_dependency = dependency.foreign_key
                     dependency_table_name, dependency_col_name = str_dependency.split(
-                        ".")
+                        "."
+                    )
                     if dependency_table_name not in cls.dependencies:
                         # We have no idea the order that the tables are given to us.
                         # So we will skip if there is a dependency not there, will pick up
                         # in recursion
                         raise DependencyProcessingException(
                             "Have not processed dependency {} for table {}".format(
-                                dependency_table_name, table_name))
-                    column_dependency = ColumnDependency(col_name,
-                        dependency_table_name, dependency_col_name)
+                                dependency_table_name, table_name
+                            )
+                        )
+                    column_dependency = ColumnDependency(
+                        col_name, dependency_table_name, dependency_col_name
+                    )
                     simple_dependencies.append(column_dependency)
                 cls.dependencies[table_name.lower()] = DependencyChain(
-                    table_name.lower(), columns, *simple_dependencies)
+                    table_name.lower(), columns, *simple_dependencies
+                )
             except DependencyProcessingException as e:
                 print(e)
                 continue
@@ -198,8 +212,7 @@ class Base(StringMixin, metaclass=BaseMeta):
 
     @classmethod
     def execute(cls, sql_insert):
-        db = cls.db
-        return db.parse_sql(sql_insert)
+        return cls.db.parse_sql(sql_insert)
 
     @classmethod
     def build_sql_insert_statements(cls, instance):
@@ -212,8 +225,10 @@ class Base(StringMixin, metaclass=BaseMeta):
             value = getattr(instance, col_name)
             col_names.append(col_name)
             values.append(value)
-        sql_insert += "({}) values ({});".format(",".join(str(i) for i in col_names),
-            ",".join("'{}'".format(i) for i in values), )
+        sql_insert += "({}) values ({});".format(
+            ",".join(str(i) for i in col_names),
+            ",".join("'{}'".format(i) for i in values),
+        )
         return sql_insert
 
     @classmethod
@@ -225,7 +240,6 @@ class Base(StringMixin, metaclass=BaseMeta):
 
 class Query:
     def __init__(self, table_name: str, col_names: Iterable[str], table_class: Base):
-        # super().__init__()
         self.table_name = table_name
         self.col_names = col_names
         self.query = "select {} from {}".format(",".join(col_names), table_name)
