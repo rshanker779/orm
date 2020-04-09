@@ -1,9 +1,9 @@
 from enum import Enum
 from typing import Tuple, List, Iterable
 
-from postgres_db import PostgresORMDB
-from simple_db import DB
-from utilities import StringMixin
+from orm.postgres_db import PostgresORMDB
+from orm.simple_db import DB
+import rshanker779_common as utils
 
 
 class ColumnTypes(Enum):
@@ -56,7 +56,7 @@ class InvalidTypeData(Exception):
 
 class BaseMeta(type):
     known_tables = {}
-    allowed_supers = [StringMixin]
+    allowed_supers = [utils.StringMixin]
 
     def __new__(meta, name, bases, class_dict):
         is_potential_table = bases != tuple() and not all(
@@ -68,7 +68,7 @@ class BaseMeta(type):
         return type.__new__(meta, name, bases, class_dict)
 
 
-class Base(StringMixin, metaclass=BaseMeta):
+class Base(utils.StringMixin, metaclass=BaseMeta):
     dependencies = {}
     sql_creation_code = []
     processed_tables = set()

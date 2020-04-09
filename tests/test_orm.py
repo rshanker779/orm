@@ -27,7 +27,7 @@ class Reply(MyBase):
     content = Column(ColumnTypes.String)
 
 
-def main():
+def test_db():
     MyBase.create_all_tables()
     user = User(id=1, name="a")
     user.save()
@@ -44,7 +44,3 @@ def main():
     users = User.query().all()
     assert len(list(users)) == 2
     print(users)
-
-
-if __name__ == "__main__":
-    main()

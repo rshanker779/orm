@@ -1,15 +1,15 @@
 from enum import Enum
 from typing import Iterable, Dict, Any, List
 
-from orm_db import ORMDB
-from utilities import StringMixin
+from orm.orm_db import ORMDB
+import rshanker779_common as utils
 
 
 class IncorrectColumnError(Exception):
     pass
 
 
-class Column(StringMixin):
+class Column(utils.StringMixin):
     def __init__(self, name: str, data_type: type):
         super().__init__()
         name = name.strip()
@@ -17,7 +17,7 @@ class Column(StringMixin):
         self.data_type = data_type
 
 
-class Row(StringMixin):
+class Row(utils.StringMixin):
     def __init__(self, data: Dict[str, Any]):
         super().__init__()
         self.col_names = set(data.keys())
@@ -25,7 +25,7 @@ class Row(StringMixin):
             setattr(self, i, v)
 
 
-class Table(StringMixin):
+class Table(utils.StringMixin):
     def __init__(self, table_name, columns: Iterable[Column]):
         super().__init__()
         table_name = table_name.strip()
@@ -134,7 +134,7 @@ class _SQLParser:
 
 
 class DB(
-    StringMixin, ORMDB,
+    utils.StringMixin, ORMDB,
 ):
     def __init__(self):
         super().__init__()
