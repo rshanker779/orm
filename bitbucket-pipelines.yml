@@ -13,3 +13,11 @@ pipelines:
         script:
           - make install
           - make test
+definitions:
+  services:
+    postgres:
+      image: postgres
+      variables:
+        POSTGRES_DB: 'orm_test'
+        POSTGRES_USER: 'test'
+        POSTGRES_PASSWORD: 'test'

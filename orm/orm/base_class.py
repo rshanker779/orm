@@ -1,15 +1,15 @@
 from typing import Tuple, List, Dict
 
 import rshanker779_common as utils
-from orm.data_structures.column import Column
 
-from orm.exceptions import InvalidTypeData
+from orm.data_structures.column import Column
+from orm.data_structures.table_information import TableInformation
 from orm.database.postgres_db import PostgresORMDB
 from orm.database.simple_db import DB
-from orm.orm.query_builder import QueryBuilder, PartialSelectQuery
+from orm.exceptions import InvalidTypeData
+from orm.orm.query_builder import QueryBuilder
 from orm.orm.table_creator import TableCreator
 from orm.orm.table_information_builder import TableInformationBuilder
-from orm.data_structures.table_information import TableInformation
 
 logger = utils.get_logger(__name__)
 

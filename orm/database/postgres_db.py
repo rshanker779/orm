@@ -1,6 +1,7 @@
-from orm.database.orm_db import ORMDB
-import sqlalchemy as sa
 import rshanker779_common as utils
+import sqlalchemy as sa
+
+from orm.database.orm_db import ORMDB
 
 logger = utils.get_logger(__name__)
 
