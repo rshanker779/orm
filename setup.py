@@ -17,9 +17,9 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "rshanker779_common",
-        "graphs @ git+ssh://git@bitbucket.org/rshanker779/graphs.git@v0.0.2",
-        "sqlalchemy",
-        "psycopg2",
+        "graphs @ git+https://github.com/rshanker779/graphs.git@v0.0.2",
+        "sqlalchemy~=1.3",
+        "psycopg2~=2.8",
     ],
     packages=find_packages(),
     entry_points={},

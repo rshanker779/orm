@@ -1,3 +1,9 @@
+"""
+Simple DB- An in-memory DB that translates PostgreSQL queries
+to Python objects. SQL parsing code is quick and dirty, as this
+is really just for testing
+"""
+
 from enum import Enum
 from typing import Iterable, Dict, Any
 
