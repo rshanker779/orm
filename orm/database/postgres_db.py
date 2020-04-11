@@ -1,14 +1,15 @@
-from orm.orm_db import ORMDB
+from orm.database.orm_db import ORMDB
 import sqlalchemy as sa
+import rshanker779_common as utils
+
+logger = utils.get_logger(__name__)
 
 
 class PostgresORMDB(ORMDB):
     _conn_string = "postgresql://test:test@localhost/orm_test"
 
     def __init__(self):
-        """
-        We drop everything since this is a dummy project
-        """
+        logger.info("Dropping tables")
         res = self.engine.execute(
             "select 'drop table if exists \"' || tablename || '\" cascade;' "
             "from pg_tables where schemaname = 'public';"

@@ -1,8 +1,10 @@
 from enum import Enum
-from typing import Iterable, Dict, Any, List
+from typing import Iterable, Dict, Any
 
-from orm.orm_db import ORMDB
+from orm.database.orm_db import ORMDB
 import rshanker779_common as utils
+
+logger = utils.get_logger(__name__)
 
 
 class IncorrectColumnError(Exception):
@@ -37,9 +39,7 @@ class Table(utils.StringMixin):
     def add_row(self, row: Row):
         if set(row.col_names) != self.col_names:
             raise IncorrectColumnError(
-                "Row names {} do not match columns {}".format(
-                    row.col_names, self.col_names
-                )
+                f"Row names {row.col_names} do not match columns {self.col_names}"
             )
         self.rows.append(row)
 
@@ -79,7 +79,7 @@ class _SQLParser:
         for sql_statement in sql_parts:
             sql_statement = sql_statement.strip()
             if sql_statement == "begin" or sql_statement == "commit":
-                print("Transactional code not supported")
+                logger.info("Transactional code not supported")
                 continue
             elif sql_statement.startswith("create"):
                 return cls._parse_table_creation(sql_statement)
@@ -104,7 +104,7 @@ class _SQLParser:
                 column = Column(column_name, self._column_type_map[column_type.strip()])
                 columns.append(column)
             if is_special:
-                print("Table keys and relations not currently supported")
+                logger.info("Table keys and relations not currently supported")
         table = Table(table_name, columns)
         return SQLReturn(SQLType.CREATE, table)
 
@@ -142,14 +142,14 @@ class DB(
         self.sql_parser = _SQLParser()
 
     def _add_table(self, table: Table):
-        print("Adding table {}".format(table))
+        logger.info(f"Adding table {table}")
         self.tables[table.name] = table
 
     def get_table(self, table_name: str) -> Table:
         return self.tables[table_name]
 
     def parse_sql(self, sql_str):
-        print("Executing query '{}'".format(sql_str))
+        logger.info(f"Executing query '{sql_str}'")
         sql_return = self.sql_parser._parse_sql(sql_str)
         if sql_return.type == SQLType.CREATE:
             self._add_table(sql_return.table)

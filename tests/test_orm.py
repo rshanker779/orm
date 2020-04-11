@@ -1,33 +1,11 @@
-from orm import Base, Column, ColumnTypes
+import pytest
 
-MyBase = Base.build("a")
-
-
-class Post(MyBase):
-    id = Column(ColumnTypes.Int, primary_key=True)
-    content = Column(ColumnTypes.String)
-    user_id = Column(ColumnTypes.Int, foreign_key="user.id")
+from tests.conftest import build_base, MyBase, User
 
 
-class User(MyBase):
-    id = Column(ColumnTypes.Int, primary_key=True)
-    name = Column(ColumnTypes.String)
-
-
-class Message(MyBase):
-    id = Column(ColumnTypes.Int, primary_key=True)
-    sending_user_id = Column(ColumnTypes.Int, foreign_key="user.id")
-    receiving_user_id = Column(ColumnTypes.Int, foreign_key="user.id")
-    content = Column(ColumnTypes.String)
-
-
-class Reply(MyBase):
-    id = Column(ColumnTypes.Int, primary_key=True)
-    post_id = Column(ColumnTypes.Int, foreign_key="post.id")
-    content = Column(ColumnTypes.String)
-
-
-def test_db():
+@pytest.mark.parametrize("engine_string", ["simple", "postgresql"])
+def test_db(engine_string):
+    build_base(engine_string)
     MyBase.create_all_tables()
     user = User(id=1, name="a")
     user.save()
@@ -43,4 +21,16 @@ def test_db():
     assert len(list(users)) == 1
     users = User.query().all()
     assert len(list(users)) == 2
-    print(users)
+
+
+@pytest.fixture
+def before():
+    build_base()
+    yield
+
+
+@pytest.mark.parametrize("table_name", ["users", "posts", "messages", "replies"])
+def test_table_exists(before, table_name):
+    MyBase.create_all_tables()
+    res = MyBase.db.parse_sql(f"select * from {table_name};")
+    assert not list(res)

@@ -1,0 +1,2 @@
+class InvalidTypeData(Exception):
+    pass
