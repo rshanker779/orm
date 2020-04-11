@@ -8,7 +8,7 @@ except:
     long_description = None
 setup(
     name="orm",
-    version="0.0.1",
+    version="0.0.2",
     author="rshanker779",
     author_email="rshanker779@gmail.com",
     description="Basic ORM",
