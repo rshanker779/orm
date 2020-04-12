@@ -3,7 +3,9 @@ language: python
 python:
   - "3.7"
 before_install:
-  - psql -c "create user test with password 'test';create database test_database;grant all privileges on database test_database to test;"
+  - psql -c "create user test with password 'test';" -U postgres
+  - psql -c "create database test_database;" -U postgres
+  - psql -c "grant all privileges on database test_database to test;" -U postgres
 install:
   - make install
 script:
