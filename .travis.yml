@@ -2,7 +2,10 @@ dist: xenial
 language: python
 python:
   - "3.7"
+before_install:
+  - psql -c 'create user test with password 'test';create database test_database;grant all privileges on database test_database to test;'
 install:
   - make install
 script:
   - make test
+services: postgresql
