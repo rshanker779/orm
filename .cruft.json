@@ -1,0 +1,13 @@
+{
+    "template": "https://github.com/rshanker779/cookie-cutter-rshanker779.git",
+    "commit": "ca4f06d9c807500c692f3a5c8367e4bda42e7486",
+    "context": {
+        "cookiecutter": {
+            "project_name": "orm",
+            "author": "rshanker779",
+            "email": "rshanker779@gmail.com",
+            "description": "Basic ORM",
+            "_template": "https://github.com/rshanker779/cookie-cutter-rshanker779.git"
+        }
+    }
+}

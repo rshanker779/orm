@@ -1,6 +1,6 @@
-install:
-	pip install .
+install: clean
 	python setup.py sdist bdist_wheel
+	pip install dist/*.whl
 
 test:
 	black --check .
@@ -29,5 +29,5 @@ coverage:
 version:
 	bump2version --config-file .bumpversion.cfg $(BUMP)
 
-all: clean install format coverage
+all: install format coverage
 
